@@ -18,11 +18,12 @@ Base.metadata.create_all(engine)
 # print(session.query(Port).all())
 # print(session.query(Link).all())
 
+PROMPT = '> '
 
-def main_menu():
-    response = input('> ')
-    if response == 'help':
+
+while True:
+    response = input(PROMPT).split()
+    if len(response) is 0:
+        continue
+    if response[0] == 'help':
         print(cmd_help())
-
-
-main_menu()
