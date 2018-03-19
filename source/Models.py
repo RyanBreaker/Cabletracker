@@ -2,6 +2,9 @@ from sqlalchemy import Column, Integer, String, ForeignKey, or_
 from sqlalchemy.orm import validates, relationship, Query, Session
 from sqlalchemy.ext.declarative import declarative_base
 
+__all__ = ["ModelException", "PortBadNameException", "SamePortException", "PortFullException", "LinkExistsException",
+           "LinkDoesntExistException", "Link", "Port", "Base"]
+
 Base = declarative_base()
 
 ### Model Exceptions
@@ -10,6 +13,10 @@ class ModelException(Exception):
 
     def __str__(self):
         return self.message
+
+
+class PortBadNameException(ModelException):
+    message = "Name must start with 'PP', 'FP', or 'RR'."
 
 
 class SamePortException(ModelException):
@@ -36,14 +43,14 @@ class Port(Base):
     __tablename__ = 'ports'
 
     id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True, index=True, nullable=False)
+    name = Column(String, unique=True, nullable=False)
     description = Column(String, default='', nullable=False)
 
     @validates('name')
     def validate_name(self, _, name: str):
-        name = name.upper()
-        assert len(name) > 0
-        assert name.startswith(('PP', 'FP', 'RR'))
+        name = name.upper().strip()
+        if not name.startswith(('PP', 'FP', 'RR')):
+            raise PortBadNameException()
         return name
 
     def __repr__(self):
