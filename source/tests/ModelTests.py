@@ -73,3 +73,7 @@ class PortTest(ModelTest):
 
         with self.assertRaises(PortFullException):
             Port.create_link(self.session, p2, p4)
+
+
+if __name__ == '__main__':
+    unittest.main()
