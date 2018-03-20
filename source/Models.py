@@ -109,9 +109,11 @@ class ModelUtil:
         return self.session.query(Port).filter(
             ~exists().where(
                 or_(
-                    Link.port_a_id == Port.id, Link.port_b_id == Port.id
+                    Link.port_a_id == Port.id,
+                    Link.port_b_id == Port.id
                 )
-            )).order_by(Port.name).all()
+            )
+        ).order_by(Port.name).all()
 
     def partial_ports(self) -> [Port]:
         """
