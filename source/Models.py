@@ -121,14 +121,13 @@ class ModelUtil:
         """
         pass
 
-
     def all_links(self) -> [Link]:
         """
         :return: A list of all Links in the database
         """
         return self.session.query(Link).order_by(Link.id).all()
 
-    def port_links(self, port: Port):
+    def port_links(self, port: Port) -> [Link]:
         """
         Returns all links relevant to the given Port
         :param port: Port to search for connected links
@@ -136,9 +135,10 @@ class ModelUtil:
         """
         return self.session.query(Link).filter(
             or_(
-                Link.port_a_id == port.id,
-                Link.port_b_id == port.id
-            )).order_by(Link.id).all()
+                Link.port_a == port,
+                Link.port_b == port
+            )
+        ).order_by(Link.id).all()
 
     def port_connection(self, port_a: Port, port_b: Port) -> Link:
         """
@@ -166,7 +166,7 @@ class ModelUtil:
         except LinkDoesntExistException:
             return False
 
-    def create_link(self, port_a: Port, port_b: Port) -> Link:
+    def create_connection(self, port_a: Port, port_b: Port) -> Link:
         """
         Creates a Link connecting the given port_a and port_b, raises LinkExistsException if a Link already exists
         :return: The Link that was created
@@ -176,4 +176,14 @@ class ModelUtil:
 
         link = Link(port_a=port_a, port_b=port_b)
         self.session.add(link)
+        return link
+
+    def delete_connection(self, port_a: Port, port_b: Port) -> Link:
+        """
+        Deletes the Link between the given Ports, raises LinkDoesntExistException if a Link doesn't exist
+        :return: The Link that was deleted
+        """
+        # LinkDoesntExistException will be raised here if the Link doesn't exist
+        link = self.port_connection(port_a, port_b)
+        self.session.delete(link)
         return link

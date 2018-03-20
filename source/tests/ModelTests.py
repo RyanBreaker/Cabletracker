@@ -18,8 +18,9 @@ class ModelTest(unittest.TestCase):
         self.engine = create_engine('sqlite:///:memory:')
         self.session: Session = sessionmaker(bind=self.engine)()
         Base.metadata.create_all(self.engine)
-        self.util = ModelUtil(self.session)
+        self.t_util = ModelUtil(self.session)
         self.t_ports = gen_ports()
+        self.session.add_all(self.t_ports.values())
 
 
 class PortTest(ModelTest):
@@ -41,23 +42,18 @@ class PortTest(ModelTest):
 class ModelUtilTest(ModelTest):
 
     def test_all_ports(self):
-        ports = gen_ports()
-        self.session.add_all(ports.values())
-        ports_query = self.util.all_ports()
-
-        self.assertListEqual(list(ports.values()), ports_query)
+        ports_query = self.t_util.all_ports()
+        self.assertEqual(list(self.t_ports.values()), ports_query)
 
     def test_empty_ports(self):
-        ports = gen_ports()
-        self.session.add_all(ports.values())
-        ports_query = self.util.empty_ports()
+        ports_query = self.t_util.empty_ports()
 
-        p1, p2, p3, p4 = ports.values()
+        p1, p2, p3, p4 = self.t_ports.values()
 
         self.assertEqual(Counter([p1, p2, p3, p4]), Counter(ports_query))
 
-        self.util.create_link(p1, p2)
-        ports_query = self.util.empty_ports()
+        self.t_util.create_connection(p1, p2)
+        ports_query = self.t_util.empty_ports()
 
         self.assertEqual(Counter([p3, p4]), Counter(ports_query))
         self.assertNotEqual(Counter([p1, p2]), Counter(ports_query))
@@ -66,25 +62,48 @@ class ModelUtilTest(ModelTest):
         self.assertNotEqual(Counter([p2, p3]), Counter(ports_query))
         self.assertNotEqual(Counter([p2, p4]), Counter(ports_query))
 
-    # def test_port_links(self):
-    #     p1, p2, p3, p4 = self.t_ports.values()
-    #
-    #     self.assertListEqual()
-    #
-    # def test_link_exists(self):
-    #     p1, p2, p3, p4 = self.t_ports.values()
-    #
-    #     self.assertFalse(self.util.link_exists(p1, p2))
-    #
-    #     self.util.create_link(p1, p2)
-    #     self.assertTrue(self.util.link_exists(p1, p2))
-    #
-    # def test_create_link(self):
-    #     p1, p2, p3, p4 = self.t_ports.values()
-    #
-    #     link = self.util.create_link(p1, p2)
-    #     self.assertTrue(link.port_a is p1)
-    #     self.assertTrue(link.port_b is p2)
-    #
-    #     # with self.assertRaises(LinkExistsException):
-    #     #     self.util.create_link(p1, p2)
+    def test_port_links(self):
+        p1, p2, p3, _ = self.t_ports.values()
+        q = self.session.query(Port).all()
+
+        # Test for empty list
+        self.assertEqual(self.t_util.port_links(p1), [])
+
+        link = self.t_util.create_connection(p1, p2)
+        self.assertIn(link, self.t_util.port_links(p1))
+        self.assertIn(link, self.t_util.port_links(p2))
+        self.assertNotIn(link, self.t_util.port_links(p3))
+
+    def test_link_exists(self):
+        p1, p2, p3, _ = self.t_ports.values()
+
+        # Test for False for non-existant Links
+        self.assertFalse(self.t_util.link_exists(p1, p2))
+
+        # Create Link to test
+        self.t_util.create_connection(p1, p2)
+        # Test for True for Link, and False for Port with only 1 Link
+        self.assertTrue(self.t_util.link_exists(p1, p2))
+        self.assertFalse(self.t_util.link_exists(p2, p3))
+
+    def test_create_link(self):
+        p1, p2, p3, _ = self.t_ports.values()
+
+        link = self.t_util.create_connection(p1, p2)
+        self.assertTrue(link.port_a is p1)
+        self.assertTrue(link.port_b is p2)
+
+        with self.assertRaises(LinkExistsException):
+            self.t_util.create_connection(p1, p2)
+
+    def test_delete_link(self):
+        p1, p2, p3, _ = self.t_ports.values()
+
+        with self.assertRaises(LinkDoesntExistException):
+            self.t_util.delete_connection(p1, p2)
+
+        link = self.t_util.create_connection(p1, p2)
+        link_deleted = self.t_util.delete_connection(p1, p2)
+        self.assertEqual(link, link_deleted)
+        with self.assertRaises(LinkDoesntExistException):
+            self.t_util.delete_connection(p1, p2)
