@@ -1,6 +1,6 @@
 import contextlib
 
-from sqlalchemy import Column, Integer, String, ForeignKey, or_, and_
+from sqlalchemy import Column, Integer, String, ForeignKey, or_, and_, exists
 from sqlalchemy.orm import validates, relationship, Session
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -69,10 +69,10 @@ class Link(Base):
     id = Column(Integer, primary_key=True)
     description = Column(String, default='', nullable=False)
 
-    end_a_id: Column = Column(Integer, ForeignKey('ports.id'), index=True, nullable=False)
-    end_b_id: Column = Column(Integer, ForeignKey('ports.id'), index=True, nullable=False)
-    end_a = relationship('Port', foreign_keys=end_a_id)
-    end_b = relationship('Port', foreign_keys=end_b_id)
+    port_a_id: Column = Column(Integer, ForeignKey('ports.id'), index=True, nullable=False)
+    port_b_id: Column = Column(Integer, ForeignKey('ports.id'), index=True, nullable=False)
+    port_a = relationship('Port', foreign_keys=port_a_id)
+    port_b = relationship('Port', foreign_keys=port_b_id)
 
     @property
     def serial(self) -> str:
@@ -82,9 +82,9 @@ class Link(Base):
         return '{:06x}'.format(self.id)
 
     def __repr__(self):
-        end_a = 'None' if self.end_a is None else self.end_a.name
-        end_b = 'None' if self.end_b is None else self.end_b.name
-        return "<Link(serial='{}', port_a='{}', port_b='{}')>".format(self.serial, end_a, end_b)
+        port_a = 'None' if self.port_a is None else self.port_a.name
+        port_b = 'None' if self.port_b is None else self.port_b.name
+        return "<Link(serial='{}', port_a='{}', port_b='{}')>".format(self.serial, port_a, port_b)
 
 
 class ModelUtil:
@@ -104,9 +104,20 @@ class ModelUtil:
 
     def empty_ports(self) -> [Port]:
         """
-        :return: All empty Ports (no Links connected)
+        :return: A list of all empty Ports (no Links connected)
         """
-        q = self.session.query(Port)
+        return self.session.query(Port).filter(
+            ~exists().where(
+                or_(
+                    Link.port_a_id == Port.id, Link.port_b_id == Port.id
+                )
+            )).order_by(Port.name).all()
+
+    def partial_ports(self) -> [Port]:
+        """
+        :return: A list of all Ports with just one Link connected
+        """
+        pass
 
 
     def all_links(self) -> [Link]:
@@ -123,8 +134,8 @@ class ModelUtil:
         """
         return self.session.query(Link).filter(
             or_(
-                Link.end_a_id == port.id,
-                Link.end_b_id == port.id
+                Link.port_a_id == port.id,
+                Link.port_b_id == port.id
             )).order_by(Link.id).all()
 
     def port_connection(self, port_a: Port, port_b: Port) -> Link:
@@ -138,7 +149,7 @@ class ModelUtil:
         port_a_links = self.port_links(port_a)
         while port_a_links:
             link = port_a_links.pop()
-            if link.end_a is port_b or link.end_b is port_b:
+            if link.port_a is port_b or link.port_b is port_b:
                 return link
         raise LinkDoesntExistException(port_a, port_b)
 
@@ -161,6 +172,6 @@ class ModelUtil:
         if self.link_exists(port_a, port_b):
             raise LinkExistsException(port_a, port_b)
 
-        link = Link(end_a=port_a, end_b=port_b)
+        link = Link(port_a=port_a, port_b=port_b)
         self.session.add(link)
         return link
