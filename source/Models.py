@@ -19,7 +19,7 @@ class ModelException(Exception):
 
 
 class PortBadNameException(ModelException):
-    message = "Name must start with 'PP', 'FP', or 'RR'."
+    message = "Port name must start with 'PP', 'FP', or 'RR'."
 
 
 class SamePortException(ModelException):
@@ -45,7 +45,7 @@ class LinkDoesntExistException(ModelException):
 class Port(Base):
     __tablename__ = 'ports'
 
-    id: Column = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
     description = Column(String, default='', nullable=False)
 
@@ -69,8 +69,8 @@ class Link(Base):
     id = Column(Integer, primary_key=True)
     description = Column(String, default='', nullable=False)
 
-    port_a_id: Column = Column(Integer, ForeignKey('ports.id'), index=True, nullable=False)
-    port_b_id: Column = Column(Integer, ForeignKey('ports.id'), index=True, nullable=False)
+    port_a_id = Column(Integer, ForeignKey('ports.id'), index=True, nullable=False)
+    port_b_id = Column(Integer, ForeignKey('ports.id'), index=True, nullable=False)
     port_a = relationship('Port', foreign_keys=port_a_id)
     port_b = relationship('Port', foreign_keys=port_b_id)
 
