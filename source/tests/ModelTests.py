@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
 from cabletracker.Models import *
+from cabletracker.Exceptions import *
 
 
 def gen_ports() -> {str: Port}:
