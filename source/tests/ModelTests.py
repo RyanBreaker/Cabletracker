@@ -4,7 +4,7 @@ from collections import Counter
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
-from Models import *
+from cabletracker.Models import *
 
 
 def gen_ports() -> {str: Port}:
@@ -62,9 +62,19 @@ class ModelUtilTest(ModelTest):
         self.assertNotEqual(Counter([p2, p3]), Counter(ports_query))
         self.assertNotEqual(Counter([p2, p4]), Counter(ports_query))
 
+    def test_all_links(self):
+        # Should return nothing
+        self.assertEqual(self.t_util.all_links(), [])
+
+        p1, p2, _, _ = self.t_ports.values()
+        link = self.t_util.create_connection(p1, p2)
+        self.assertEqual([link], self.t_util.all_links())
+
+        self.t_util.delete_connection(p1, p2)
+        self.assertEqual([], self.t_util.all_links())
+
     def test_port_links(self):
         p1, p2, p3, _ = self.t_ports.values()
-        q = self.session.query(Port).all()
 
         # Test for empty list
         self.assertEqual(self.t_util.port_links(p1), [])
@@ -73,6 +83,15 @@ class ModelUtilTest(ModelTest):
         self.assertIn(link, self.t_util.port_links(p1))
         self.assertIn(link, self.t_util.port_links(p2))
         self.assertNotIn(link, self.t_util.port_links(p3))
+
+    def test_port_connection(self):
+        p1, p2, _, _ = self.t_ports.values()
+
+        with self.assertRaises(SamePortException):
+            self.t_util.port_connection(p1, p1)
+
+        link = self.t_util.create_connection(p1, p2)
+        self.assertTrue([link], self.t_util.port_connection(p1, p2))
 
     def test_link_exists(self):
         p1, p2, p3, _ = self.t_ports.values()
