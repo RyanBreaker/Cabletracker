@@ -1,5 +1,3 @@
-import contextlib
-
 from sqlalchemy import Column, Integer, String, ForeignKey, or_, and_, exists
 from sqlalchemy.orm import validates, relationship, Session
 from sqlalchemy.ext.declarative import declarative_base
