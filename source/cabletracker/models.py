@@ -1,8 +1,8 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, or_, and_, exists
+from sqlalchemy import Column, Integer, String, ForeignKey, or_, exists
 from sqlalchemy.orm import validates, relationship, Session
 from sqlalchemy.ext.declarative import declarative_base
 
-from .Exceptions import *
+from .exceptions import SamePortException, PortBadNameException, LinkExistsException, LinkDoesntExistException
 
 __all__ = ["Link", "Port", "ModelUtil", "Base"]
 

@@ -1,6 +1,3 @@
-from .Models import Port
-
-
 class ModelException(Exception):
     message = None
 
@@ -17,15 +14,15 @@ class SamePortException(ModelException):
 
 
 class PortFullException(ModelException):
-    def __init__(self, port: Port):
+    def __init__(self, port):
         self.message = "'{}' is already full.".format(port.name)
 
 
 class LinkExistsException(ModelException):
-    def __init__(self, port_a: Port, port_b: Port):
+    def __init__(self, port_a, port_b):
         self.message = "A link already exists between ports '{}' and '{}'.".format(port_a.name, port_b.name)
 
 
 class LinkDoesntExistException(ModelException):
-    def __init__(self, port_a: Port, port_b: Port):
+    def __init__(self, port_a, port_b):
         self.message = "No link between '{}' and '{}' exists.".format(port_a.name, port_b.name)

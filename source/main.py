@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from .Models import *
+from cabletracker.models import ModelUtil, Base, Port
 
 engine = create_engine('sqlite:///:memory:')
 session = sessionmaker(bind=engine)()

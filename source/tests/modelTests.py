@@ -4,8 +4,8 @@ from collections import Counter
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
-from cabletracker.Models import *
-from cabletracker.Exceptions import *
+from cabletracker.models import *
+from cabletracker.exceptions import *
 
 
 def gen_ports() -> {str: Port}:
